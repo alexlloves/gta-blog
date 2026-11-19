@@ -21,7 +21,11 @@ import type {
  * deben replicarse en el servidor.
  */
 export interface CommunityRepository {
-  load(): Promise<CommunityData>;
+  /** `me`: id de quien navega, cuando la identidad la decide el servidor (cookie). */
+  load(): Promise<CommunityData & { me?: string | null }>;
+
+  /** true si el servidor decide quién actúa (los `userId` que se pasan se ignoran). */
+  readonly serverIdentity?: boolean;
 
   /* Autenticación */
   register(input: RegisterInput): Promise<User>;

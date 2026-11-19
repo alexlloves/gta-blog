@@ -34,9 +34,10 @@ function emit() {
 }
 
 async function refresh() {
-  const data = await repository.load();
-  let userId = state?.userId ?? readSession();
-  if (userId && !data.users.some((u) => u.id === userId)) {
+  const { me, ...data } = await repository.load();
+  // Con base de datos, la identidad la decide el servidor (cookie).
+  let userId = repository.serverIdentity ? (me ?? null) : (state?.userId ?? readSession());
+  if (userId && !repository.serverIdentity && !data.users.some((u) => u.id === userId)) {
     userId = null;
     writeSession(null);
   }
@@ -45,7 +46,14 @@ async function refresh() {
 }
 
 function ensureLoaded() {
-  if (!loading) loading = refresh();
+  if (!loading) {
+    loading = refresh().catch((err) => {
+      // Error de red o del servidor: se reintenta en unos segundos.
+      console.error("[GTA VI Community] No se pudieron cargar los datos", err);
+      loading = null;
+      setTimeout(() => listeners.size > 0 && void ensureLoaded(), 3000);
+    });
+  }
   return loading;
 }
 
@@ -90,7 +98,8 @@ export function useData(): CommunityData | null {
 /** Id de quien actúa en este navegador (sesión o identidad anónima); `null` si aún no ha participado. */
 export function useActorId(): string | null {
   const s = useStore();
-  return s?.userId ?? (s ? readGuestId() : null);
+  if (!s) return null;
+  return s.userId ?? (repository.serverIdentity ? null : readGuestId());
 }
 
 /** `undefined` = cargando; `null` = sin sesión. */
@@ -259,7 +268,7 @@ export function readGuestId(): string | null {
 
 async function mutate<T>(fn: (userId: string) => Promise<T>, auth: boolean | "guest" = "guest"): Promise<T> {
   await ensureLoaded();
-  const result = await fn(auth === false ? "" : await actorId(auth === "guest"));
+  const result = await fn(auth === false || repository.serverIdentity ? "" : await actorId(auth === "guest"));
   await refresh();
   return result;
 }

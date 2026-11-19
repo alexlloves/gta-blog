@@ -390,12 +390,15 @@ export class LocalStorageRepository implements CommunityRepository {
   }
 }
 
-function cleanPostInput(input: PostInput): PostInput {
+export function cleanPostInput(input: PostInput): PostInput {
   const title = input.title.trim().replace(/\s+/g, " ");
   const body = input.body.trim();
   if (title.length < 8) throw new Error("El título debe tener al menos 8 caracteres");
   if (title.length > 140) throw new Error("El título no puede superar 140 caracteres");
-  if (body.length < 10 && !input.image) throw new Error("Añade algo más de contenido (mín. 10 caracteres)");
+  // En las preguntas la descripción es opcional.
+  if (input.type !== "pregunta" && body.length < 10 && !input.image) {
+    throw new Error("Añade algo más de contenido (mín. 10 caracteres)");
+  }
   const tags = Array.from(
     new Set(input.tags.map((t) => t.trim().toLowerCase().replace(/^#/, "").replace(/\s+/g, "-")).filter(Boolean)),
   ).slice(0, 5);
