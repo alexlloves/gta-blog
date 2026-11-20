@@ -12,11 +12,27 @@ type Sql = postgres.Sql;
 
 const globalForDb = globalThis as unknown as { __gtaviSql?: Sql; __gtaviReady?: Promise<void> };
 
+/**
+ * postgres.js envía al servidor como parámetros de sesión los de la URL que no
+ * conoce. `channel_binding` (que Neon incluye) es solo de libpq y haría que
+ * Postgres rechace la conexión, así que se quita. El cifrado lo sigue
+ * garantizando `sslmode=require`.
+ */
+export function normalizeDatabaseUrl(raw: string): string {
+  try {
+    const url = new URL(raw);
+    url.searchParams.delete("channel_binding");
+    return url.toString();
+  } catch {
+    return raw;
+  }
+}
+
 export function getSql(): Sql | null {
-  const url = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
-  if (!url) return null;
+  const raw = process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
+  if (!raw) return null;
   if (!globalForDb.__gtaviSql) {
-    globalForDb.__gtaviSql = postgres(url, {
+    globalForDb.__gtaviSql = postgres(normalizeDatabaseUrl(raw), {
       // Compatible con el pooler de Neon (PgBouncer en modo transacción).
       prepare: false,
       max: Number(process.env.PG_POOL_MAX) || 5,
