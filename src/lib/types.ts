@@ -63,6 +63,8 @@ export interface Post {
   image?: PostImage;
   tags: string[];
   authorId: string;
+  /** Nombre con el que se publicó (si se eligió uno). */
+  authorName?: string;
   createdAt: string;
   updatedAt?: string;
   likeCount: number;
@@ -78,6 +80,8 @@ export interface Comment {
   /** `null` = comentario raíz (en preguntas: una respuesta). */
   parentId: string | null;
   authorId: string;
+  /** Nombre con el que se publicó (si se eligió uno). */
+  authorName?: string;
   body: string;
   createdAt: string;
   updatedAt?: string;

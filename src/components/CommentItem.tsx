@@ -1,5 +1,6 @@
 "use client";
 
+import { authorLabel } from "@/lib/community";
 import { useState } from "react";
 import { actions, useActorId, useDerived } from "@/lib/data/store";
 import { cn, formatFullDate, formatRelativeDate } from "@/lib/format";
@@ -66,8 +67,8 @@ export function CommentItem({
             </p>
           )}
           <header className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm">
-            <Avatar user={author} size={depth === 0 ? "sm" : "xs"} />
-            <span className="font-semibold">{author?.displayName ?? "Anónimo"}</span>
+            <Avatar user={author && { ...author, displayName: authorLabel(comment, author) }} size={depth === 0 ? "sm" : "xs"} />
+            <span className="font-semibold">{authorLabel(comment, author)}</span>
             {isOP && <span className="rounded bg-orange/15 px-1.5 text-[10px] font-bold uppercase text-orange">Autor</span>}
             <span className="text-xs text-subtle">
               ·{" "}

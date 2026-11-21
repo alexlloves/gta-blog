@@ -1,5 +1,6 @@
 "use client";
 
+import { authorLabel } from "@/lib/community";
 import Link from "next/link";
 import { useDerived } from "@/lib/data/store";
 import { cn, formatCount, formatRelativeDate } from "@/lib/format";
@@ -67,8 +68,8 @@ export function QuestionCard({ question, query = "" }: { question: Post; query?:
           <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
             <CategoryBadge category={question.category} link={false} />
             <span className="ml-auto flex items-center gap-1.5">
-              <Avatar user={author} size="xs" />
-              <span className="font-medium text-text/80">{author?.displayName ?? "Anónimo"}</span>
+              <Avatar user={author && { ...author, displayName: authorLabel(question, author) }} size="xs" />
+              <span className="font-medium text-text/80">{authorLabel(question, author)}</span>
               <span className="opacity-50">·</span>
               <time dateTime={question.createdAt}>{formatRelativeDate(question.createdAt)}</time>
             </span>

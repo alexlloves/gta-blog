@@ -105,6 +105,11 @@ export function cleanAuthorName(raw: unknown): string | null {
   return name.length >= 2 ? name : null;
 }
 
+/** Nombre a mostrar: el elegido al publicar o, si no hay, el de la identidad. */
+export function authorLabel(item: { authorName?: string }, user?: { displayName: string }): string {
+  return item.authorName || user?.displayName || DEFAULT_NAME;
+}
+
 /* ---------- Gamificación ---------- */
 
 export const POINTS = {

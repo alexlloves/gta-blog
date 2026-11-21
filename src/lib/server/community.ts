@@ -66,6 +66,7 @@ export async function loadSnapshot(sql: Sql): Promise<CommunityData> {
         body: p.body,
         tags: [],
         authorId: p.author_id,
+        authorName: p.author_name ?? undefined,
         createdAt: iso(p.created_at)!,
         updatedAt: iso(p.updated_at),
         likeCount: p.like_count,
@@ -79,6 +80,7 @@ export async function loadSnapshot(sql: Sql): Promise<CommunityData> {
         postId: c.post_id,
         parentId: c.parent_id,
         authorId: c.author_id,
+        authorName: c.author_name ?? undefined,
         body: c.body,
         createdAt: iso(c.created_at)!,
         updatedAt: iso(c.updated_at),
@@ -131,12 +133,6 @@ async function ownedComment(sql: Sql, commentId: string, userId: string) {
   if (c.author_id !== userId) throw new HttpError(403, "Solo puedes modificar tus propias respuestas");
 }
 
-/** Guarda el nombre visible elegido al publicar (si lo hay). */
-async function applyName(sql: Sql, userId: string, raw: unknown) {
-  const name = cleanAuthorName(raw);
-  if (name) await sql`UPDATE users SET display_name = ${name} WHERE id = ${userId}`;
-}
-
 /** Acciones que no necesitan identidad. */
 export const PUBLIC_ACTIONS = new Set(["registerView"]);
 
@@ -149,9 +145,9 @@ export async function runAction(sql: Sql, action: string, args: Record<string, u
     }
     case "createPost": {
       const q = validQuestion(args.input);
-      await applyName(sql, userId, (args.input as { authorName?: unknown } | undefined)?.authorName);
+      const authorName = cleanAuthorName((args.input as { authorName?: unknown } | undefined)?.authorName);
       const postId = id("p_");
-      await sql`INSERT INTO posts (id, author_id, category, title, body) VALUES (${postId}, ${userId}, ${q.category}, ${q.title}, ${q.body})`;
+      await sql`INSERT INTO posts (id, author_id, author_name, category, title, body) VALUES (${postId}, ${userId}, ${authorName}, ${q.category}, ${q.title}, ${q.body})`;
       return { id: postId };
     }
     case "updatePost": {
@@ -193,9 +189,8 @@ export async function runAction(sql: Sql, action: string, args: Record<string, u
         const [parent] = await sql`SELECT post_id FROM comments WHERE id = ${parentId}`;
         if (!parent || parent.post_id !== postId) throw new HttpError(404, "La respuesta a la que contestas ya no existe");
       }
-      await applyName(sql, userId, input.authorName);
       const commentId = id("c_");
-      await sql`INSERT INTO comments (id, post_id, parent_id, author_id, body) VALUES (${commentId}, ${postId}, ${parentId}, ${userId}, ${body})`;
+      await sql`INSERT INTO comments (id, post_id, parent_id, author_id, author_name, body) VALUES (${commentId}, ${postId}, ${parentId}, ${userId}, ${cleanAuthorName(input.authorName)}, ${body})`;
       return { id: commentId };
     }
     case "updateComment": {

@@ -202,19 +202,12 @@ export class LocalStorageRepository implements CommunityRepository {
 
   /* ---------- Publicaciones ---------- */
 
-  /** Guarda el nombre visible elegido al publicar (si lo hay). */
-  private applyName(userId: string, raw: unknown) {
-    const name = cleanAuthorName(raw);
-    if (!name) return;
-    this.commit({ users: this.db.users.map((u) => (u.id === userId ? { ...u, displayName: name } : u)) });
-  }
-
   async createPost(input: PostInput, userId: string) {
-    this.applyName(userId, input.authorName);
     const post: Post = {
       id: createId("p_"),
       ...cleanPostInput(input),
       authorId: userId,
+      authorName: cleanAuthorName(input.authorName) ?? undefined,
       createdAt: new Date().toISOString(),
       likeCount: 0,
       viewCount: 0,
@@ -226,7 +219,7 @@ export class LocalStorageRepository implements CommunityRepository {
   async updatePost(postId: string, input: PostInput, userId: string) {
     const post = this.post(postId);
     if (post.authorId !== userId) throw new PermissionError("Solo puedes editar tus propias publicaciones");
-    const next: Post = { ...post, ...cleanPostInput(input), updatedAt: new Date().toISOString() };
+    const next: Post = { ...post, ...cleanPostInput(input), authorName: post.authorName, updatedAt: new Date().toISOString() };
     if (next.type !== "pregunta") delete next.solutionId;
     this.commit({ posts: this.db.posts.map((p) => (p.id === postId ? next : p)) });
     return next;
@@ -282,7 +275,6 @@ export class LocalStorageRepository implements CommunityRepository {
   /* ---------- Comentarios ---------- */
 
   async createComment({ postId, parentId, body, authorName }: CommentInput, userId: string) {
-    this.applyName(userId, authorName);
     const post = this.post(postId);
     const text = body.trim();
     if (text.length < 2) throw new Error("El comentario es demasiado corto");
@@ -294,6 +286,7 @@ export class LocalStorageRepository implements CommunityRepository {
       postId,
       parentId,
       authorId: userId,
+      authorName: cleanAuthorName(authorName) ?? undefined,
       body: text.slice(0, 5000),
       createdAt: new Date().toISOString(),
       score: 0,

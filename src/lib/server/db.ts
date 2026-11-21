@@ -102,6 +102,9 @@ async function migrate(sql: Sql) {
       PRIMARY KEY (comment_id, user_id)
     )`;
   await sql`CREATE INDEX IF NOT EXISTS comments_post_idx ON comments(post_id)`;
+  // v2: nombre elegido al publicar, guardado en cada pregunta/respuesta.
+  await sql`ALTER TABLE posts ADD COLUMN IF NOT EXISTS author_name text`;
+  await sql`ALTER TABLE comments ADD COLUMN IF NOT EXISTS author_name text`;
   await sql`CREATE TABLE IF NOT EXISTS meta (key text PRIMARY KEY, value text NOT NULL)`;
 
   // Datos de ejemplo una sola vez (aunque luego se borren preguntas).

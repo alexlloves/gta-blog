@@ -1,5 +1,6 @@
 "use client";
 
+import { authorLabel } from "@/lib/community";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -96,9 +97,9 @@ export function PostView() {
         {post.body && <Prose text={post.body} className="mt-4 text-text/90" />}
 
         <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-muted">
-          <Avatar user={author} size="xs" />
+          <Avatar user={author && { ...author, displayName: authorLabel(post, author) }} size="xs" />
           <span>
-            <span className="font-medium text-text/90">{author?.displayName ?? "Anónimo"}</span>
+            <span className="font-medium text-text/90">{authorLabel(post, author)}</span>
             <span className="mx-1.5 opacity-50">·</span>
             <time dateTime={post.createdAt} title={formatFullDate(post.createdAt)}>
               {formatRelativeDate(post.createdAt)}
