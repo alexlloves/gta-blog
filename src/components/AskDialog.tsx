@@ -12,6 +12,7 @@ import { Button } from "./Button";
 import { Field, TextArea, TextInput } from "./Field";
 import { SpinnerIcon } from "./Icons";
 import { Modal, closeNearestDialog } from "./Modal";
+import { NameField, useAuthorName } from "./NameField";
 import { useUI } from "./AppProviders";
 
 const TITLE_MIN = 10;
@@ -28,6 +29,7 @@ export function AskDialog({ initialTitle = "", post, onClose }: { initialTitle?:
   const [title, setTitle] = useState(post?.title ?? initialTitle);
   const [body, setBody] = useState(post?.body ?? "");
   const [category, setCategory] = useState<CategorySlug>(post?.category ?? "preguntas");
+  const [name, setName, rememberName] = useAuthorName();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,10 +53,11 @@ export function AskDialog({ initialTitle = "", post, onClose }: { initialTitle?:
       setError(`La pregunta debe tener al menos ${TITLE_MIN} caracteres.`);
       return;
     }
-    const input = { type: "pregunta" as const, category, title: trimmed, body, tags: post?.tags ?? [] };
+    const input = { type: "pregunta" as const, category, title: trimmed, body, tags: post?.tags ?? [], authorName: editing ? undefined : name };
     setSubmitting(true);
     setError(null);
     try {
+      if (!editing) rememberName();
       const saved = editing ? await actions.updatePost(post.id, input) : await actions.createPost(input);
       toast(editing ? "Pregunta actualizada" : "¡Pregunta publicada!");
       closeNearestDialog(form);
@@ -142,6 +145,8 @@ export function AskDialog({ initialTitle = "", post, onClose }: { initialTitle?:
             ))}
           </div>
         </fieldset>
+
+        {!editing && <NameField id={`${uid}-n`} value={name} onChange={setName} />}
 
         {error && (
           <p role="alert" className="text-sm text-pink">

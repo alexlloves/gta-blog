@@ -93,6 +93,18 @@ export function isSortMode(v: string | null | undefined): v is SortMode {
   return SORT_MODES.some((s) => s.id === v);
 }
 
+/* ---------- Nombre visible ---------- */
+
+export const NAME_MAX = 30;
+export const DEFAULT_NAME = "Anónimo";
+
+/** Normaliza el nombre elegido; `null` si está vacío o no es válido. */
+export function cleanAuthorName(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const name = raw.replace(/[\u0000-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim().slice(0, NAME_MAX);
+  return name.length >= 2 ? name : null;
+}
+
 /* ---------- Gamificación ---------- */
 
 export const POINTS = {

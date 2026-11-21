@@ -7,6 +7,7 @@ import { Button } from "./Button";
 import { TextArea } from "./Field";
 import { SpinnerIcon } from "./Icons";
 import { useUI } from "./AppProviders";
+import { NameField, useAuthorName } from "./NameField";
 
 const MIN = 2;
 
@@ -35,6 +36,7 @@ export function CommentForm({
   const uid = useId();
   const { run } = useUI();
   const [body, setBody] = useState(initialBody);
+  const [name, setName, rememberName] = useAuthorName();
   const [submitting, setSubmitting] = useState(false);
   const valid = body.trim().length >= MIN;
   const editing = !!onSubmitEdit;
@@ -45,7 +47,10 @@ export function CommentForm({
     setSubmitting(true);
     const result = editing
       ? await run(() => onSubmitEdit(body), "Cambios guardados")
-      : await run(() => actions.createComment({ postId, parentId, body }), isAnswer ? "Respuesta publicada" : "Comentario publicado");
+      : await run(() => {
+          rememberName();
+          return actions.createComment({ postId, parentId, body, authorName: name });
+        }, isAnswer ? "Respuesta publicada" : "Comentario publicado");
     setSubmitting(false);
     if (result !== undefined) {
       if (!editing) setBody("");
@@ -72,6 +77,7 @@ export function CommentForm({
         required
         placeholder={isAnswer ? "Comparte lo que sabes..." : "Escribe una respuesta..."}
       />
+      {!editing && <NameField id={`${uid}-n`} value={name} onChange={setName} compact />}
       <div className="flex items-center justify-end gap-2">
         <span className="mr-auto hidden text-xs text-subtle sm:inline">⌘/Ctrl + Enter para enviar</span>
         {onCancel && (

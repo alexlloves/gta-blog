@@ -131,12 +131,15 @@ export interface PostInput {
   body: string;
   image?: PostImage;
   tags: string[];
+  /** Nombre visible elegido por quien publica (opcional, sin cuenta). */
+  authorName?: string;
 }
 
 export interface CommentInput {
   postId: string;
   parentId: string | null;
   body: string;
+  authorName?: string;
 }
 
 export interface RegisterInput {

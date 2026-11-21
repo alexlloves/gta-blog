@@ -1,4 +1,5 @@
 import type { CommunityRepository } from "./repository";
+import { cleanAuthorName } from "@/lib/community";
 import { createSeedData, SEED_PASSWORDS } from "./seed";
 import type {
   Comment,
@@ -201,7 +202,15 @@ export class LocalStorageRepository implements CommunityRepository {
 
   /* ---------- Publicaciones ---------- */
 
+  /** Guarda el nombre visible elegido al publicar (si lo hay). */
+  private applyName(userId: string, raw: unknown) {
+    const name = cleanAuthorName(raw);
+    if (!name) return;
+    this.commit({ users: this.db.users.map((u) => (u.id === userId ? { ...u, displayName: name } : u)) });
+  }
+
   async createPost(input: PostInput, userId: string) {
+    this.applyName(userId, input.authorName);
     const post: Post = {
       id: createId("p_"),
       ...cleanPostInput(input),
@@ -272,7 +281,8 @@ export class LocalStorageRepository implements CommunityRepository {
 
   /* ---------- Comentarios ---------- */
 
-  async createComment({ postId, parentId, body }: CommentInput, userId: string) {
+  async createComment({ postId, parentId, body, authorName }: CommentInput, userId: string) {
+    this.applyName(userId, authorName);
     const post = this.post(postId);
     const text = body.trim();
     if (text.length < 2) throw new Error("El comentario es demasiado corto");
