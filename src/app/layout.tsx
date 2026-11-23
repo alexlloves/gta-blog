@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Unbounded } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { AppProviders } from "@/components/AppProviders";
 import { Header } from "@/components/Header";
 import "./globals.css";
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             GTA VI Community · Comunidad no oficial de fans. No afiliada a Rockstar Games.
           </footer>
         </AppProviders>
+        <Analytics />
       </body>
     </html>
   );
